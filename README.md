@@ -1,0 +1,2 @@
+# rusq
+SQL Linter Formatter
