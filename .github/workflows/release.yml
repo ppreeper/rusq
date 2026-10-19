@@ -1,0 +1,43 @@
+name: release
+
+on:
+  push:
+    tags: ['v*']
+
+# Needed to create the release and upload its assets.
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: build and publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      # Builds the six os/arch archives into dist/ and verifies the version
+      # stamp by running the linux/amd64 binary.
+      - name: build archives
+        run: make release VERSION="${GITHUB_REF_NAME}"
+
+      # Publish, or refresh the assets if the release already exists (a tag
+      # can be re-pushed after a failed build).
+      - name: publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "${GITHUB_REF_NAME}" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1; then
+            gh release upload "${GITHUB_REF_NAME}" --repo "${GITHUB_REPOSITORY}" --clobber \
+              dist/*.tar.gz dist/*.zip dist/checksums.txt
+          else
+            gh release create "${GITHUB_REF_NAME}" \
+              --repo "${GITHUB_REPOSITORY}" \
+              --title "${GITHUB_REF_NAME}" \
+              --generate-notes \
+              dist/*.tar.gz dist/*.zip dist/checksums.txt
+          fi
