@@ -1,0 +1,5 @@
+[rules."convention.last_select_star"]
+force-enable = true
+
+[expect]
+diagnostics = ["1:27 CV13"]

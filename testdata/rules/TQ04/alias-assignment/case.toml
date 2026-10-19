@@ -1,0 +1,5 @@
+[settings]
+dialect = "tsql"
+
+[expect]
+diagnostics = ["1:8 TQ04"]

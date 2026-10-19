@@ -1,0 +1,1 @@
+SELECT SUM(x) OVER (ORDER BY s) AS s FROM t;

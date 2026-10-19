@@ -1,0 +1,8 @@
+# Files that never belong in the VSIX.
+.vscode/**
+src/**
+node_modules/**
+tsconfig.json
+package-lock.json
+.gitignore
+**/*.map

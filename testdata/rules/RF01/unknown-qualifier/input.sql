@@ -1,0 +1,1 @@
+SELECT x.a FROM t;

@@ -1,0 +1,5 @@
+[rules."aliasing.length"]
+min-alias-length = 2
+
+[expect]
+diagnostics = ["1:22 AL06"]

@@ -1,0 +1,9 @@
+[settings]
+dialect = "bigquery"
+
+[rules."convention.quoted_literals"]
+preferred-quoted-literal-style = "single_quotes"
+
+[expect]
+fix = true
+diagnostics = ["1:8 CV10"]

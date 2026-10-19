@@ -1,0 +1,6 @@
+[settings]
+unsafe = true
+
+[expect]
+fix = true
+diagnostics = ["1:26 AM03"]

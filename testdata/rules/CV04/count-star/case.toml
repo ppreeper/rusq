@@ -1,0 +1,6 @@
+[rules."convention.count_rows"]
+prefer-count-1 = true
+
+[expect]
+fix = true
+diagnostics = ["1:14 CV04"]

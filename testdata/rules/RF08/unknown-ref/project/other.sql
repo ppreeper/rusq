@@ -1,0 +1,1 @@
+CREATE VIEW known AS SELECT 1 AS x;

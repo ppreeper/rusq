@@ -1,0 +1,1 @@
+SELECT IFNULL(a, 0) FROM t;

@@ -1,0 +1,2 @@
+[expect]
+diagnostics = ["2:1 LT10"]

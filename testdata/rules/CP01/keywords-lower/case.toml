@@ -1,0 +1,6 @@
+[rules."capitalisation.keywords"]
+capitalisation-policy = "upper"
+
+[expect]
+fix = true
+diagnostics = ["1:1 CP01", "1:10 CP01"]

@@ -1,0 +1,6 @@
+[rules."aliasing.column"]
+aliasing = "explicit"
+
+[expect]
+fix = true
+diagnostics = ["1:10 AL02"]

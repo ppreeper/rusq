@@ -1,0 +1,1 @@
+SELECT * FROM t QUALIFY x > 1;

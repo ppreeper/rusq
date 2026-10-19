@@ -1,0 +1,8 @@
+select u.id, u.name, u.email, count(o.id) as orders
+from users u
+left join orders o on o.user_id = u.id
+where
+      u.active = true and
+      u.deleted_at is null and
+      u.created_at > now() - interval 30 days
+group by u.id, u.name, u.email;

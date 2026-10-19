@@ -1,0 +1,5 @@
+[settings]
+templater = "jinja"
+
+[expect]
+diagnostics = ["1:22 RF08"]

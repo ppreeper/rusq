@@ -1,0 +1,5 @@
+[rules."convention.blocked_words"]
+blocked-words = ["foo"]
+
+[expect]
+diagnostics = ["1:8 CV09"]
