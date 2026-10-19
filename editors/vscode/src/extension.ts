@@ -35,10 +35,14 @@ function resolveBinary(): string {
 	if (configured.length > 0) {
 		return configured;
 	}
-	const name = process.platform === 'win32' ? 'rusq.exe' : 'rusq';
-	const bundled = path.join(__dirname, '..', name);
-	if (fs.existsSync(bundled)) {
-		return bundled;
+	// A platform-specific package ships the matching binary at the extension
+	// root (rusq.exe on Windows).
+	const names = process.platform === 'win32' ? ['rusq.exe', 'rusq'] : ['rusq'];
+	for (const name of names) {
+		const bundled = path.join(__dirname, '..', name);
+		if (fs.existsSync(bundled)) {
+			return bundled;
+		}
 	}
 	return 'rusq';
 }

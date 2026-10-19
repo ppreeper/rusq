@@ -28,7 +28,12 @@ relative to the CLI.
 
 ## Requirements
 
-The `rusq` binary must be available. Either:
+**Installed from the Marketplace or Open VSX: nothing to install.** Each
+platform package (`linux-x64`, `linux-arm64`, `darwin-x64`, `darwin-arm64`,
+`win32-x64`, `win32-arm64`) ships the matching `rusq` binary, so the extension
+works out of the box. On a platform with no specific package — the generic
+package, or another architecture — the extension falls back to a `rusq` on
+`PATH`:
 
 ```sh
 go install github.com/ppreeper/rusq/cmd/rusq@latest
@@ -57,8 +62,9 @@ cd editors/vscode
 npm install
 npm run build        # bundles src/ into dist/extension.js
 npm run compile      # type-check only
-npm run package      # produces rusq-sql-0.1.2.vsix
-code --install-extension rusq-sql-0.1.2.vsix
+npm run package          # generic package, no bundled binary
+npm run package:targets  # six platform packages, each bundling the binary
+code --install-extension rusq-sql-0.1.2@linux-x64.vsix
 ```
 
 To hack on the extension, open this folder in VS Code and press <kbd>F5</kbd>
