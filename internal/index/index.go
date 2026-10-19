@@ -97,7 +97,7 @@ func (ix *Index) Put(path string, src []byte, d *dialect.Dialect) {
 	if ix == nil {
 		return
 	}
-	key := filepath.ToSlash(path)
+	key := normKey(path)
 	if ix.files == nil {
 		ix.files = map[string]*facts{}
 	}
@@ -109,7 +109,7 @@ func (ix *Index) Remove(path string) {
 	if ix == nil {
 		return
 	}
-	delete(ix.files, filepath.ToSlash(path))
+	delete(ix.files, normKey(path))
 }
 
 // DefinitionCount returns how many definitions the index holds in total.
@@ -163,7 +163,7 @@ func Build(files []walk.File, opts Options) (*Index, error) {
 			if err != nil {
 				return
 			}
-			key := filepath.ToSlash(f.Path)
+			key := normKey(f.Path)
 			h := hashBytes(b)
 			if st != nil {
 				if prev, ok := st.Files[key]; ok && prev.Hash == h {
@@ -181,7 +181,7 @@ func Build(files []walk.File, opts Options) (*Index, error) {
 		if out[i] == nil {
 			continue
 		}
-		key := filepath.ToSlash(f.Path)
+		key := normKey(f.Path)
 		ix.files[key] = out[i]
 		next.Files[key] = out[i]
 	}
@@ -379,7 +379,7 @@ func (ix *Index) DefinitionsInPath(path string) []Definition {
 	if ix == nil {
 		return nil
 	}
-	f := ix.files[filepath.ToSlash(path)]
+	f := ix.files[normKey(path)]
 	if f == nil {
 		return nil
 	}
@@ -391,7 +391,7 @@ func (ix *Index) ReferencesInPath(path string) []Reference {
 	if ix == nil {
 		return nil
 	}
-	f := ix.files[filepath.ToSlash(path)]
+	f := ix.files[normKey(path)]
 	if f == nil {
 		return nil
 	}
@@ -456,7 +456,7 @@ func (ix *Index) ReferencedElsewhere(path, name string) bool {
 	if ix == nil {
 		return false
 	}
-	self := filepath.ToSlash(path)
+	self := normKey(path)
 	base := strings.ToLower(Base(name))
 	for _, p := range ix.Paths() {
 		if p == self {
@@ -472,6 +472,11 @@ func (ix *Index) ReferencedElsewhere(path, name string) bool {
 }
 
 // --- persistence -----------------------------------------------------------
+
+// normKey normalises a path for use as an index key. Keys stay in the
+// platform's native form so they match walk.File.Path and source.Text.Path;
+// the on-disk store converts to slashes instead (see saveStore/loadStore).
+func normKey(path string) string { return filepath.Clean(path) }
 
 func storePath(opts Options) string {
 	if opts.CacheDir == "" {
@@ -502,6 +507,13 @@ func loadStore(opts Options) *store {
 	if st.Files == nil {
 		st.Files = map[string]*facts{}
 	}
+	// The store is portable (slash-separated keys); the index works with
+	// native paths so callers can compare against what they passed in.
+	native := make(map[string]*facts, len(st.Files))
+	for k, v := range st.Files {
+		native[filepath.FromSlash(k)] = v
+	}
+	st.Files = native
 	return &st
 }
 
@@ -516,7 +528,15 @@ func saveStore(opts Options, st *store) {
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return
 	}
-	b, err := json.Marshal(st)
+	portable := &store{
+		Version:  st.Version,
+		Settings: st.Settings,
+		Files:    make(map[string]*facts, len(st.Files)),
+	}
+	for k, v := range st.Files {
+		portable.Files[filepath.ToSlash(k)] = v
+	}
+	b, err := json.Marshal(portable)
 	if err != nil {
 		return
 	}

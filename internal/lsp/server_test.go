@@ -625,14 +625,15 @@ func TestTemplatedDiagnosticsInSourceCoordinates(t *testing.T) {
 }
 
 func TestPathFromURI(t *testing.T) {
-	if got := pathFromURI("file:///tmp/a.sql"); got != "/tmp/a.sql" {
-		t.Errorf("pathFromURI = %q", got)
+	// pathFromURI returns a native path, so the expectation is native too.
+	if want := filepath.FromSlash("/tmp/a.sql"); pathFromURI("file:///tmp/a.sql") != want {
+		t.Errorf("pathFromURI = %q, want %q", pathFromURI("file:///tmp/a.sql"), want)
 	}
 	if got := pathFromURI("untitled:Untitled-1"); got != "" {
 		t.Errorf("non-file uri = %q, want empty", got)
 	}
-	if got := pathFromURI("file:///tmp/a%20b.sql"); got != "/tmp/a b.sql" {
-		t.Errorf("escaped uri = %q", got)
+	if want := filepath.FromSlash("/tmp/a b.sql"); pathFromURI("file:///tmp/a%20b.sql") != want {
+		t.Errorf("escaped uri = %q, want %q", pathFromURI("file:///tmp/a%20b.sql"), want)
 	}
 }
 
