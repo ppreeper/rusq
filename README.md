@@ -358,8 +358,14 @@ Speed is a requirement, not a nicety — see
 ```console
 make bench                  # all benchmarks, with -benchmem
 make bench-record           # archive to bench/ and compare with benchstat
+make bench-gate             # fail if any benchmark regresses past BENCH_THRESHOLD (5%)
 make corpus && make bench-corpus   # end-to-end cold/warm timing over 20k files
 ```
+
+On Windows the same sweep runs natively as `.\scripts\bench.ps1`; the bash
+helpers (`bench.sh`, `bench-gate.sh`, `gen-corpus.sh`) need WSL or Git Bash. CI
+records Windows timings in the `bench-windows` job (see
+[docs/PERFORMANCE.md](docs/PERFORMANCE.md) §9.2.1).
 
 Determinism is part of the contract: parallel runs produce byte-identical
 output, and serial and parallel reports must match exactly.

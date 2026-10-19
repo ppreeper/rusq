@@ -70,6 +70,8 @@ cache has been dropped — that distinction is called out wherever it matters.
 | P-10 | Formatter, already-formatted file | **< 1.5× lint cost** | `BenchmarkFormatIdempotent` |
 | P-11 | Release binary, stripped, `linux/amd64` | **< 30 MB** | release job |
 | P-12 | Lint throughput, single worker | **> 400 files/s** typical | corpus sweep |
+| P-13 | Windows process start, median of 10 (`rusq version`) | **< 75 ms** | `bench-windows` CI job |
+| P-14 | Windows single-file lint, same model as P-3 | **< 2× P-3** | `BenchmarkLintDefault` in the `bench-windows` job |
 
 P-1 and P-3 are the product-level numbers; the rest exist so that a regression
 can be localised before it shows up as a slower end-to-end run.
@@ -402,10 +404,25 @@ runner before a release.
 `.github/workflows/ci.yml` runs `gofmt`, `go vet`, `go build`, `go test` and
 (`ubuntu`/`macos` only) `go test -race` on **ubuntu, macOS, and Windows**, so
 every code path that touches the filesystem, the terminal, or the process
-environment is exercised on Windows even though §2's numbers describe Linux. The
-absolute Windows IO and process-start figures remain unmeasured; they are to be
-recorded on a Windows runner before v1.0 rather than assumed from the Linux
-numbers. **[open]**
+environment is exercised on Windows as well as on Linux. `.gitattributes` pins
+LF in the working tree, which keeps the `gofmt` check meaningful on Windows and
+keeps the byte-for-byte fixture comparisons honest (a CRLF checkout would change
+what the parser round-trip test is asserting).
+
+Windows timings are **recorded, not gated**: alongside the Linux job, a
+`bench-windows` job on `windows-latest` measures process start (median of ten
+`rusq version` invocations, timed from the outside with `Measure-Command`) and
+runs a benchmark subset (`BenchmarkStartup`, `BenchmarkCheckFiles`,
+`BenchmarkLex`, `BenchmarkParse`, `BenchmarkLintDefault`, `BenchmarkFormat`),
+then uploads both as the `timings-windows` artefact. Budgets **P-13** (< 75 ms
+process start) and **P-14** (< 2× the Linux per-file lint cost) are checked
+against those artefacts at release time; they are not enforced per-PR because
+shared runners are too noisy for a threshold, exactly as with OQ-P1. **[decision]**
+
+The measurement helpers are split by platform: `scripts/bench.sh` and
+`scripts/bench-gate.sh` are bash and therefore need WSL or Git Bash on Windows,
+while `scripts/bench.ps1` runs the same benchmark sweep natively and writes to
+the same `bench/<sha>-<utc>.txt` archive convention.
 
 ### 9.3 What a performance PR must include
 
@@ -484,12 +501,18 @@ whether the OS page cache was warm.
   `NumCPU`? It is useful for scaling benchmarks and for memory-constrained CI.
   **Resolved: `--workers <N>` is a global flag** (0 = `NumCPU`), used by
   `check`, the cross-file index build, and `make bench-corpus`. **[decision]**
-- **OQ-P4 — Partly resolved: correctness on Windows is now covered, timings are
-  not.** The CI matrix (§9.2.1) runs gofmt, vet, build, and tests on Windows as
-  well as macOS and Linux, so the portable IO, terminal-detection, and
-  process-start paths are continuously exercised. The absolute Windows numbers
-  remain unmeasured and are deferred until a Windows runner is available for a
-  timing sweep. **[open]**
+- **OQ-P4 — Resolved: Windows is covered for both correctness and timing.** The
+  CI matrix runs gofmt, vet, build, and the full test suite on Windows, and the
+  `bench-windows` job measures process start and a benchmark subset on every
+  push, uploading them as an artefact (§9.2.1). Budgets **P-13** and **P-14**
+  (Windows process start < 75 ms; Windows per-file lint < 2× the Linux figure)
+  bound the numbers and are verified at release time. The evidence that no
+  OS-specific code path exists is structural rather than empirical: nothing in
+  the tree imports `syscall`, `golang.org/x/sys`, or touches `/dev` or `/proc`,
+  and the only `runtime.GOOS` branch is the Windows drive-letter handling in the
+  language server's `file:` URI parsing. `scripts/bench.ps1` gives Windows the
+  same local benchmark workflow as `scripts/bench.sh`, and `.gitattributes` pins
+  LF so a Windows checkout tests the same bytes. **[decision]**
 - **OQ-P5 — Resolved: the index stays JSON.** Measured on a 2,000-file corpus
   (7.9 MB of SQL across all 27 dialects): `.rusq_cache/index.json` is **328 KB**
   — about 164 bytes per file, so ~3.3 MB for a 20,000-file project, and loading

@@ -44,7 +44,7 @@ jobs:
         run: go test -race ./internal/...
 
   bench:
-    name: benchmarks
+    name: benchmarks (linux)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -53,4 +53,49 @@ jobs:
           go-version-file: go.mod
           cache: true
       - name: run benchmarks
-        run: make bench BENCHTIME=50ms BENCH_COUNT=1
+        shell: bash
+        run: |
+          mkdir -p bench
+          make bench BENCHTIME=200ms BENCH_COUNT=1 | tee bench/ci-linux.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: timings-linux
+          path: bench/ci-linux.txt
+
+  # Windows numbers are recorded rather than gated: shared runners are too noisy
+  # for a threshold, and the point of this job is to keep the platform from
+  # silently regressing or breaking (docs/PERFORMANCE.md §9.2.1, P-13/P-14).
+  bench-windows:
+    name: benchmarks (windows)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: build
+        run: go build -trimpath -o bin/rusq.exe ./cmd/rusq
+      - name: process start
+        shell: pwsh
+        run: |
+          $times = 1..10 | ForEach-Object {
+            (Measure-Command { .\bin\rusq.exe version | Out-Null }).TotalMilliseconds
+          }
+          $median = ($times | Sort-Object)[5]
+          $line = 'rusq version median: {0:N1} ms' -f $median
+          Write-Host $line
+          New-Item -ItemType Directory -Force -Path bench | Out-Null
+          Set-Content -Path bench/ci-windows-startup.txt -Value $line
+      - name: run benchmarks
+        shell: pwsh
+        run: |
+          go test -run '^$' -bench 'BenchmarkStartup|BenchmarkCheckFiles|BenchmarkLex|BenchmarkParse|BenchmarkLintDefault|BenchmarkFormat' -benchmem -benchtime=200ms -count=1 ./internal/... |
+            Tee-Object -FilePath bench/ci-windows.txt
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: timings-windows
+          path: |
+            bench/ci-windows.txt
+            bench/ci-windows-startup.txt
