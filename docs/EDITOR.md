@@ -321,10 +321,27 @@ args = ["server"]
 
 ### 5.3 VS Code
 
-Install the extension from the marketplace, or build the client that ships in
-[`editors/vscode`](../editors/vscode) (see §6). It is a plain stdio client for
-`rusq server`, so it uses whatever `rusq` binary you have installed. To make
-`rusq` the default SQL formatter:
+Install from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=ppreeper.rusq-sql):
+
+```console
+$ code --install-extension ppreeper.rusq-sql
+```
+
+Cursor, VSCodium, Theia and Gitpod install from
+[Open VSX](https://open-vsx.org/extension/ppreeper/rusq-sql) instead; it is the
+same extension under the same id.
+
+**Nothing else to install.** Each platform package (`linux-x64`, `linux-arm64`,
+`darwin-x64`, `darwin-arm64`, `win32-x64`, `win32-arm64`) bundles the matching
+`rusq` binary, so diagnostics and formatting work out of the box. On a platform
+with no specific package — the generic package, or another architecture — the
+extension falls back to a `rusq` on `PATH`.
+
+The client is a thin LSP client: all linting and formatting happens in the
+`rusq` binary, so the extension never goes out of date relative to the CLI. To
+build one from a checkout, see §6.3.
+
+To make `rusq` the default SQL formatter:
 
 ```json
 "[sql]": { "editor.defaultFormatter": "ppreeper.rusq-sql" }
@@ -369,13 +386,48 @@ infers them per file from `.rusq.toml` discovery. **[decision]**
 ```console
 $ cd editors/vscode
 $ npm install
-$ npm run build          # bundles src/ into dist/extension.js
-$ npm run package        # rusq-sql-0.1.2.vsix
-$ code --install-extension rusq-sql-0.1.2.vsix
+$ npm run compile         # type-check
+$ npm run package         # generic package, no bundled binary
+$ npm run package:targets # six platform packages, each with the binary
+$ code --install-extension rusq-sql-0.1.2@linux-x64.vsix
 ```
 
 Or open `editors/vscode` in VS Code and press <kbd>F5</kbd> to run it in an
 Extension Development Host.
+
+### 6.4 Publishing
+
+[`editors/vscode/scripts/publish.sh`](../editors/vscode/scripts/publish.sh)
+builds the six platform binaries, packages one VSIX per target plus a generic
+fallback, and — when a token is present — publishes to the VS Code Marketplace
+(`vsce`) and Open VSX (`ovsx`). Republishing is safe: both registries reject an
+already-published version instead of replacing it, and the script treats that
+as success, so a partial publish can simply be re-run.
+
+```console
+$ cd editors/vscode
+$ npm ci && npm run compile
+$ VSCE_PAT=<marketplace-token> OVSX_PAT=<open-vsx-token> npm run publish:targets
+$ # or one registry at a time:
+$ npm run publish:targets -- --registry ovsx
+```
+
+Prerequisites, once per publisher:
+
+- **Marketplace** — create the `ppreeper` publisher at
+  <https://marketplace.visualstudio.com/manage> and an Azure DevOps PAT with the
+  *Marketplace → Manage* scope. Note that Azure DevOps global PATs are retired
+  on 1 December 2026; after that, Marketplace auth uses Microsoft Entra ID
+  (`vsce publish --azure-credential`).
+- **Open VSX** — sign in at <https://open-vsx.org> with GitHub, sign the
+  Publisher Agreement, generate a token, and create the namespace
+  (`npx ovsx create-namespace ppreeper -p "$OVSX_PAT"`). The script does the
+  namespace step for you and ignores an "already exists" result.
+
+Pushing a `v*` tag runs
+[`publish-extension.yml`](../.github/workflows/publish-extension.yml), which
+does the same in CI when `VSCE_PAT`/`OVSX_PAT` secrets are configured and always
+uploads the VSIXs as a build artifact.
 
 ---
 

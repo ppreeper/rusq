@@ -1,0 +1,70 @@
+name: Publish extension
+
+# Publishes rusq-sql to the VS Code Marketplace and Open VSX, one VSIX per
+# platform with the matching rusq binary bundled. Tagging a release triggers it;
+# without VSCE_PAT/OVSX_PAT secrets it only packages, so the workflow is safe in
+# a fork.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: marketplace + open vsx
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: editors/vscode
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: editors/vscode/package-lock.json
+
+      - run: npm ci
+
+      - name: Check publishing tokens
+        id: tokens
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        run: |
+          if [ -z "$VSCE_PAT" ] && [ -z "$OVSX_PAT" ]; then
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "No publishing tokens configured; packaging only."
+          else
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - run: npm run compile
+
+      - name: Package one VSIX per platform
+        if: steps.tokens.outputs.available != 'true'
+        run: npm run package:targets
+
+      - name: Package and publish
+        if: steps.tokens.outputs.available == 'true'
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        run: npm run publish:targets
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: vsix
+          path: editors/vscode/*.vsix
+          if-no-files-found: error

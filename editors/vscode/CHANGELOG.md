@@ -5,6 +5,11 @@
 - Tracks the `rusq v0.1.2` release. `rusq server` now accepts the `--stdio`
   and `--clientProcessId` flags that `vscode-languageclient` appends when it
   launches the server over stdio, fixing `write EPIPE` on startup.
+- Platform packages (`linux-x64`, `linux-arm64`, `darwin-x64`, `darwin-arm64`,
+  `win32-x64`, `win32-arm64`) bundle the matching `rusq` binary, so installing
+  from the Marketplace or Open VSX needs no separate setup. The generic package
+  keeps the old behaviour and uses a `rusq` on `PATH`.
+- Added the extension icon, homepage, issue tracker and gallery banner.
 
 ## 0.1.1
 
