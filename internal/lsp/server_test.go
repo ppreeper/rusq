@@ -161,10 +161,15 @@ func applyEdit(t *testing.T, text []byte, e textEdit) []byte {
 }
 
 func fileURI(dir, name string) string {
-	// Build a real URL. On Windows "file://" + path would produce a string
-	// full of backslashes with no path separator, which url.Parse cannot turn
-	// back into the path walk.Discover yields.
-	return (&url.URL{Scheme: "file", Path: filepath.ToSlash(filepath.Join(dir, name))}).String()
+	// Build a real URL. The path must start with "/" or the result is
+	// "file://C:/..." and the drive letter is parsed as the URL host, so the
+	// document path never matches the one walk.Discover yields. Prefixing the
+	// slash gives "file:///C:/..." on Windows and "file:///tmp/..." on Unix.
+	p := filepath.ToSlash(filepath.Join(dir, name))
+	if !strings.HasPrefix(p, "/") {
+		p = "/" + p
+	}
+	return (&url.URL{Scheme: "file", Path: p}).String()
 }
 
 func testOpts(t *testing.T) Options {
