@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"io"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -159,7 +160,12 @@ func applyEdit(t *testing.T, text []byte, e textEdit) []byte {
 	return out
 }
 
-func fileURI(dir, name string) string { return "file://" + filepath.Join(dir, name) }
+func fileURI(dir, name string) string {
+	// Build a real URL. On Windows "file://" + path would produce a string
+	// full of backslashes with no path separator, which url.Parse cannot turn
+	// back into the path walk.Discover yields.
+	return (&url.URL{Scheme: "file", Path: filepath.ToSlash(filepath.Join(dir, name))}).String()
+}
 
 func testOpts(t *testing.T) Options {
 	t.Helper()

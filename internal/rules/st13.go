@@ -20,7 +20,10 @@ func (r *st13) Check(ctx *lint.Context) []diagnostic.Diagnostic {
 	if ctx.Index == nil || ctx.AST == nil {
 		return nil
 	}
-	self := filepath.ToSlash(ctx.Source.Path)
+	// Index keys are held in the platform's native form (see index.normKey),
+	// so the identity comparison below must use the same form. walk.File.Path
+	// is slash-separated on every platform, hence the Clean.
+	self := filepath.Clean(ctx.Source.Path)
 	var out []diagnostic.Diagnostic
 	for _, def := range ctx.Index.DefinitionsInPath(self) {
 		if def.Kind == "cte" {
