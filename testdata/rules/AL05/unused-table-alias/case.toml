@@ -1,0 +1,2 @@
+[expect]
+diagnostics = ["1:20 AL05"]

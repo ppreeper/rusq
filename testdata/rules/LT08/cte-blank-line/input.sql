@@ -1,0 +1,4 @@
+WITH c AS (
+    SELECT 1 AS x
+)
+SELECT * FROM c;

@@ -31,3 +31,10 @@ go.work.sum
 # Editor/IDE
 # .idea/
 # .vscode/
+
+# rusq
+bin/
+.rusq_cache/
+
+# benchmark archives
+bench/

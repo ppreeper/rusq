@@ -1,0 +1,1 @@
+CREATE TABLE t (id INT) DISTRIBUTED BY (id);

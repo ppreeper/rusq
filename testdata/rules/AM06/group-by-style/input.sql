@@ -1,0 +1,1 @@
+SELECT a, b FROM t GROUP BY 1, b;

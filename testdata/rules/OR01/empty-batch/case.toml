@@ -1,0 +1,5 @@
+[settings]
+dialect = "oracle"
+
+[expect]
+diagnostics = ["2:1 OR01"]

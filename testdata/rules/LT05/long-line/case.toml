@@ -1,0 +1,5 @@
+[settings]
+line-length = 40
+
+[expect]
+diagnostics = ["1:1 LT05"]

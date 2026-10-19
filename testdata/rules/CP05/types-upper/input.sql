@@ -1,0 +1,1 @@
+SELECT CAST(a AS INT) FROM t;

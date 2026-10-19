@@ -1,0 +1,26 @@
+# Normalise line endings in the working tree.
+#
+# rusq's fixture tests compare formatted output byte-for-byte against goldens
+# and the parser round-trip test asserts Unparse(Parse(src)) == src, so a
+# checkout that rewrites LF to CRLF would change what is being tested. Pinning
+# LF also keeps `gofmt -l .` meaningful in the Windows CI job.
+* text=auto eol=lf
+
+# Shell entry points are run by bash even on Windows (WSL/Git Bash).
+*.sh text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# Windows-native scripting.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Binary artefacts.
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.vsix binary
+*.wasm binary
+*.exe binary

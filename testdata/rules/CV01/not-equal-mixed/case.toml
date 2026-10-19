@@ -1,0 +1,3 @@
+[expect]
+fix = true
+diagnostics = ["1:47 CV01"]

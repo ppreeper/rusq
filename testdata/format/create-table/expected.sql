@@ -1,0 +1,7 @@
+CREATE TABLE users (
+    id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    email TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id)
+);

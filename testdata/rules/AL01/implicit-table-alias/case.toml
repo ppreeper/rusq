@@ -1,0 +1,6 @@
+[rules."aliasing.table"]
+aliasing = "explicit"
+
+[expect]
+fix = true
+diagnostics = ["1:25 AL01"]

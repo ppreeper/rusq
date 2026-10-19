@@ -1,0 +1,101 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: gofmt
+        shell: bash
+        run: |
+          out="$(gofmt -l .)"
+          if [ -n "$out" ]; then
+            echo "these files are not gofmt-clean:" >&2
+            echo "$out" >&2
+            exit 1
+          fi
+      - name: vet
+        run: go vet ./...
+      - name: build
+        run: go build ./...
+      - name: test
+        run: go test ./...
+      - name: race
+        # The race detector needs a C toolchain; the Windows image is the least
+        # predictable of the three, so it is covered by the plain test run.
+        if: runner.os != 'Windows'
+        run: go test -race ./internal/...
+
+  bench:
+    name: benchmarks (linux)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: run benchmarks
+        shell: bash
+        run: |
+          mkdir -p bench
+          make bench BENCHTIME=200ms BENCH_COUNT=1 | tee bench/ci-linux.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: timings-linux
+          path: bench/ci-linux.txt
+
+  # Windows numbers are recorded rather than gated: shared runners are too noisy
+  # for a threshold, and the point of this job is to keep the platform from
+  # silently regressing or breaking (docs/PERFORMANCE.md §9.2.1, P-13/P-14).
+  bench-windows:
+    name: benchmarks (windows)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: build
+        run: go build -trimpath -o bin/rusq.exe ./cmd/rusq
+      - name: process start
+        shell: pwsh
+        run: |
+          $times = 1..10 | ForEach-Object {
+            (Measure-Command { .\bin\rusq.exe version | Out-Null }).TotalMilliseconds
+          }
+          $median = ($times | Sort-Object)[5]
+          $line = 'rusq version median: {0:N1} ms' -f $median
+          Write-Host $line
+          New-Item -ItemType Directory -Force -Path bench | Out-Null
+          Set-Content -Path bench/ci-windows-startup.txt -Value $line
+      - name: run benchmarks
+        shell: pwsh
+        run: |
+          go test -run '^$' -bench 'BenchmarkStartup|BenchmarkCheckFiles|BenchmarkLex|BenchmarkParse|BenchmarkLintDefault|BenchmarkFormat' -benchmem -benchtime=200ms -count=1 ./internal/... |
+            Tee-Object -FilePath bench/ci-windows.txt
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: timings-windows
+          path: |
+            bench/ci-windows.txt
+            bench/ci-windows-startup.txt

@@ -1,0 +1,6 @@
+[settings]
+dialect = "tsql"
+
+[expect]
+fix = true
+diagnostics = ["3:1 TQ03"]

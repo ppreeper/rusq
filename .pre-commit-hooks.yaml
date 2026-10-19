@@ -1,0 +1,15 @@
+- id: rusq-check
+  name: rusq check
+  description: Lint SQL with rusq
+  entry: rusq check --force-exclude
+  language: golang
+  types_or: [sql]
+  require_serial: false
+
+- id: rusq-format
+  name: rusq format
+  description: Format SQL with rusq
+  entry: rusq format --force-exclude
+  language: golang
+  types_or: [sql]
+  require_serial: true

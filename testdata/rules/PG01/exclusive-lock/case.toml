@@ -1,0 +1,5 @@
+[settings]
+dialect = "postgres"
+
+[expect]
+diagnostics = ["1:1 PG01"]

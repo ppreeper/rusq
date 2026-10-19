@@ -1,0 +1,1 @@
+SELECT plain FROM t;

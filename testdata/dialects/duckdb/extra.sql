@@ -1,0 +1,1 @@
+SELECT * FROM t PIVOT (SUM(x) FOR y IN (1, 2));

@@ -1,0 +1,92 @@
+{
+  "name": "rusq-sql",
+  "displayName": "rusq — SQL linter & formatter",
+  "description": "Fast SQL linting, formatting and quick fixes, powered by the rusq language server.",
+  "version": "0.1.0",
+  "license": "MIT",
+  "publisher": "ppreeper",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ppreeper/rusq",
+    "directory": "editors/vscode"
+  },
+  "engines": {
+    "vscode": "^1.91.0"
+  },
+  "categories": [
+    "Linters",
+    "Formatters"
+  ],
+  "keywords": [
+    "sql",
+    "lint",
+    "formatter",
+    "dialects",
+    "jinja",
+    "dbt"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onLanguage:sql",
+    "onLanguage:jinja-sql",
+    "onLanguage:sql-bigquery",
+    "onLanguage:dbt-sql",
+    "onLanguage:pgsql",
+    "onLanguage:mysql",
+    "onLanguage:plsql"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "rusq.restartServer",
+        "title": "rusq: Restart language server"
+      },
+      {
+        "command": "rusq.showOutput",
+        "title": "rusq: Show output channel"
+      }
+    ],
+    "configuration": {
+      "title": "rusq",
+      "properties": {
+        "rusq.binaryPath": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Path to the `rusq` binary. Leave empty to use a `rusq` binary next to the extension, or `rusq` on `PATH`."
+        },
+        "rusq.configPath": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Value passed as `--config <path>`. Leave empty to use `.rusq.toml` discovery from each file's directory."
+        },
+        "rusq.trace.server": {
+          "type": "string",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "default": "off",
+          "description": "Trace the JSON-RPC traffic between VS Code and the rusq language server."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "build": "esbuild src/extension.ts --bundle --platform=node --format=cjs --target=node20 --external:vscode --sourcemap --outfile=dist/extension.js",
+    "watch": "npm run build -- --watch",
+    "compile": "tsc -p . --noEmit",
+    "package": "vsce package"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^10.1.2"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/vscode": "^1.91.0",
+    "@vscode/vsce": "^3.0.0",
+    "esbuild": "^0.28.0",
+    "typescript": "^5.9.0"
+  }
+}

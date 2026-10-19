@@ -1,0 +1,2 @@
+[expect]
+diagnostics = ["1:11 RUS101"]

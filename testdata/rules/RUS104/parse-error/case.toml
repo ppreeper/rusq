@@ -1,0 +1,3 @@
+[expect]
+diagnostics = ["2:1 RUS104"]
+syntax-errors = 1

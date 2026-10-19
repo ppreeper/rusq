@@ -1,0 +1,4 @@
+SELECT a
+FROM t
+WHERE a
+= 1;

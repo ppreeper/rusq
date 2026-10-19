@@ -1,0 +1,1 @@
+SELECT * FROM t PREWHERE x > 1 WHERE y < 2;

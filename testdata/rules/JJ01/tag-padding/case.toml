@@ -1,0 +1,6 @@
+[settings]
+templater = "jinja"
+
+[expect]
+fix = true
+diagnostics = ["1:8 JJ01"]

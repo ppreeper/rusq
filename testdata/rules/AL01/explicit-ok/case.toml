@@ -1,0 +1,5 @@
+[rules."aliasing.table"]
+aliasing = "explicit"
+
+[expect]
+diagnostics = []

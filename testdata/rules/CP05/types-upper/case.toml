@@ -1,0 +1,6 @@
+[rules."capitalisation.types"]
+extended-capitalisation-policy = "lower"
+
+[expect]
+fix = true
+diagnostics = ["1:18 CP05"]
