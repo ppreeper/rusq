@@ -1,7 +1,15 @@
-.PHONY: build test race bench bench-record bench-gate bench-corpus corpus lint fmt clean install
+.PHONY: build release install test race bench bench-record bench-gate bench-corpus corpus lint fmt clean
 
 BINARY := bin/rusq
 PKG := ./...
+
+# Release metadata, stamped into the binary with -ldflags so `rusq version`
+# reports what you are running.
+VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
+COMMIT  ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo none)
+DATE    ?= $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
+VERSION_PKG := github.com/ppreeper/rusq/internal/version
+LDFLAGS := -X $(VERSION_PKG).Version=$(VERSION) -X $(VERSION_PKG).Commit=$(COMMIT) -X $(VERSION_PKG).Date=$(DATE)
 
 # Benchmark knobs (see docs/PERFORMANCE.md §5).
 BENCH_PATTERN ?= .
@@ -15,10 +23,15 @@ CORPUS_DIR ?= /tmp/rusq-corpus
 CORPUS_FILES ?= 20000
 
 build:
-	go build -trimpath -o $(BINARY) ./cmd/rusq
+	go build -trimpath -ldflags "$(LDFLAGS)" -o $(BINARY) ./cmd/rusq
 
 install:
-	go install -trimpath ./cmd/rusq
+	go install -trimpath -ldflags "$(LDFLAGS)" ./cmd/rusq
+
+# Cross-platform archives plus checksums into dist/ (see scripts/release.sh).
+# CI runs this on every v* tag; .github/workflows/release.yml publishes them.
+release:
+	scripts/release.sh $(VERSION)
 
 test:
 	go test $(PKG)

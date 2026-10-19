@@ -38,3 +38,6 @@ bin/
 
 # benchmark archives
 bench/
+
+# release archives
+dist/
