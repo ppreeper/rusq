@@ -2,7 +2,7 @@
   "name": "rusq-sql",
   "displayName": "rusq — SQL linter & formatter",
   "description": "Fast SQL linting, formatting and quick fixes, powered by the rusq language server.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "license": "MIT",
   "publisher": "ppreeper",
   "repository": {

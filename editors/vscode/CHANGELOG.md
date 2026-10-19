@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.1
+
+- Tracks the `rusq v0.1.1` release. No client behaviour changes: the same LSP
+  surface, settings and commands.
+
 ## 0.1.0
 
 - Initial release: LSP client for `rusq server`.
