@@ -161,6 +161,11 @@ func lintFiles(s settings.Settings, files []walk.File, opts linter.Options, writ
 			return results, changedAny, err
 		}
 	}
+	if !G.NoCache {
+		// Evict the least recently used entries when the cache is over budget
+		// ([cache] max-size, default 512MiB).
+		c.Prune(s.CacheMaxSize)
+	}
 	return results, changedAny, nil
 }
 

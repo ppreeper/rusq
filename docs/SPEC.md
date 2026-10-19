@@ -272,6 +272,10 @@ keyword-line-position = "leading"
 [index]
 # opt-in cross-file checks (§8.3)
 enabled = false
+
+[cache]
+# evict least-recently-used entries above this size (default 512MiB)
+max-size = "512MB"
 ```
 
 > `[dialects]` and `[templaters]` are plural on purpose: TOML cannot have both a

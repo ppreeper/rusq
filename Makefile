@@ -1,4 +1,4 @@
-.PHONY: build test race bench bench-corpus corpus lint fmt clean install
+.PHONY: build test race bench bench-record bench-gate bench-corpus corpus lint fmt clean install
 
 BINARY := bin/rusq
 PKG := ./...
@@ -7,6 +7,8 @@ PKG := ./...
 BENCH_PATTERN ?= .
 BENCHTIME ?= 200ms
 BENCH_COUNT ?= 1
+BENCH_BASELINE ?=
+BENCH_THRESHOLD ?= 5
 
 # Corpus knobs (see docs/PERFORMANCE.md §6).
 CORPUS_DIR ?= /tmp/rusq-corpus
@@ -31,6 +33,12 @@ bench:
 # under bench/.
 bench-record:
 	BENCHTIME=$(BENCHTIME) scripts/bench.sh '$(BENCH_PATTERN)'
+
+# Fail when any benchmark regresses more than BENCH_THRESHOLD% against
+# BENCH_BASELINE (default: the newest archive in bench/).
+bench-gate:
+	BENCH_PATTERN='$(BENCH_PATTERN)' BENCHTIME=$(BENCHTIME) BENCH_COUNT=$(BENCH_COUNT) BENCH_THRESHOLD=$(BENCH_THRESHOLD) \
+		scripts/bench-gate.sh '$(BENCH_BASELINE)' $(BENCH_THRESHOLD)
 
 corpus:
 	scripts/gen-corpus.sh $(CORPUS_DIR) $(CORPUS_FILES)

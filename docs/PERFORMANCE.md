@@ -380,6 +380,11 @@ scheduler questions.
   or `internal/cache`.
 - **`benchstat` compares** against the merge-base. A regression over **5%** in
   a P-* benchmark fails the job; between 5% and 10% warns.
+- **The gate is scripted** as `scripts/bench-gate.sh` (make target
+  `bench-gate`). It records a run into `bench/`, compares the **median `ns/op`**
+  of each benchmark against a stored baseline, and exits non-zero when anything
+  regresses by more than `BENCH_THRESHOLD` (default 5%). It does not require
+  `benchstat` to be installed, so it runs anywhere Go does. **[decision]**
 - **Allocation budgets** are checked as hard numbers per benchmark, because
   they move before latency does.
 - **Corpus sweep** runs nightly on a dedicated runner and records wall, RSS,
@@ -387,7 +392,20 @@ scheduler questions.
 
 CI runners are noisy. Gates compare against the same runner and the merge-base,
 never against an absolute number from this document; the absolute targets in §2
-are release criteria, not per-PR gates.
+are release criteria, not per-PR gates. **[decision]** — there is no absolute
+ceiling in the per-PR job: the gate is strictly relative (median vs baseline on
+the same machine class), and the §2 numbers are verified by hand on a dedicated
+runner before a release.
+
+### 9.2.1 Platform coverage
+
+`.github/workflows/ci.yml` runs `gofmt`, `go vet`, `go build`, `go test` and
+(`ubuntu`/`macos` only) `go test -race` on **ubuntu, macOS, and Windows**, so
+every code path that touches the filesystem, the terminal, or the process
+environment is exercised on Windows even though §2's numbers describe Linux. The
+absolute Windows IO and process-start figures remain unmeasured; they are to be
+recorded on a Windows runner before v1.0 rather than assumed from the Linux
+numbers. **[open]**
 
 ### 9.3 What a performance PR must include
 
@@ -448,18 +466,35 @@ whether the OS page cache was warm.
 
 ## 12. Open questions
 
-- **OQ-P1** — Should the per-PR gate be relative (`benchstat` vs merge-base) only,
-  or also enforce an absolute ceiling on `BenchmarkCheckFiles`? Absolute gates
-  are stable but noisy on shared runners. **[open]**
-- **OQ-P2** — Cache eviction policy: unbounded growth is simplest and fine for a
-  laptop, but a large monorepo will accumulate entries. A size cap with LRU
-  needs a measurement before it is chosen. **[open]**
+- **OQ-P1 — Resolved: the per-PR gate is relative only.** `make bench-gate`
+  compares median `ns/op` against a stored baseline on the same machine class and
+  fails past `BENCH_THRESHOLD` (5%); there is no absolute ceiling in CI. The §2
+  targets are enforced by hand on a dedicated runner at release time. **[decision]**
+- **OQ-P2 — Resolved: a size cap with LRU eviction.** `[cache] max-size` accepts
+  `512MB`, `2GiB`, `unlimited`, etc.; the default is **512 MiB**, and after each
+  run the cache evicts its least recently modified entries until it fits
+  (`Cache.Prune`), then drops directories left empty. Recency is mtime: an entry
+  that keeps returning the same result is rewritten by `Put` only when it is
+  stored, so untouched files age out first. Measured: a 2,000-file corpus writes
+  about **42 bytes of JSON per clean file** (83 KB in total) and about **800
+  bytes per file** when every file is full of findings (1.6 MB), so a 512 MiB
+  cap holds hundreds of thousands of files — eviction exists for the pathological
+  monorepo, not for everyday use. **[decision]**
 - **OQ-P3** — Is `--workers` worth exposing, or should the pool always be
   `NumCPU`? It is useful for scaling benchmarks and for memory-constrained CI.
   **Resolved: `--workers <N>` is a global flag** (0 = `NumCPU`), used by
   `check`, the cross-file index build, and `make bench-corpus`. **[decision]**
-- **OQ-P4** — Windows IO and process-start costs are not represented in the
-  targets above; they need their own sweep before v1.0. **[open]**
-- **OQ-P5** — Whether the cross-file index should persist a compact binary form
-  rather than JSON; JSON is inspectable and fast enough until measured
-  otherwise. **[open]**
+- **OQ-P4 — Partly resolved: correctness on Windows is now covered, timings are
+  not.** The CI matrix (§9.2.1) runs gofmt, vet, build, and tests on Windows as
+  well as macOS and Linux, so the portable IO, terminal-detection, and
+  process-start paths are continuously exercised. The absolute Windows numbers
+  remain unmeasured and are deferred until a Windows runner is available for a
+  timing sweep. **[open]**
+- **OQ-P5 — Resolved: the index stays JSON.** Measured on a 2,000-file corpus
+  (7.9 MB of SQL across all 27 dialects): `.rusq_cache/index.json` is **328 KB**
+  — about 164 bytes per file, so ~3.3 MB for a 20,000-file project, and loading
+  it is part of a 0.20 s cold (0.03 s warm) whole-corpus run. At that size a
+  compact binary form would save a few hundred kilobytes and cost the
+  inspectability that makes the store debuggable (it is plain JSON you can read,
+  diff, and delete), so JSON is retained and revisited only if a real project
+  makes the store large. **[decision]**

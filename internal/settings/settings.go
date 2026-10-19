@@ -5,6 +5,7 @@ package settings
 import (
 	"fmt"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/bmatcuk/doublestar/v4"
@@ -46,6 +47,10 @@ func (f FormatOptions) TypeLinePosition(name, fallback string) string {
 	return fallback
 }
 
+// DefaultCacheMaxSize caps the on-disk cache when no `[cache] max-size` is set.
+// The cache is only a hint, so evicting old entries is always safe.
+const DefaultCacheMaxSize int64 = 512 << 20
+
 // Settings is the resolved configuration for a run.
 type Settings struct {
 	DialectName        string
@@ -66,6 +71,7 @@ type Settings struct {
 	PerFileIgnores     map[string][]string
 	Preview            bool
 	Index              bool
+	CacheMaxSize       int64
 	IgnoreSuppressions bool
 	DisableNoqa        bool
 	Format             FormatOptions
@@ -86,6 +92,7 @@ func Default() Settings {
 		RenderVariantLimit: 5,
 		MaxParseDepth:      255,
 		MaxParseNodes:      100000,
+		CacheMaxSize:       DefaultCacheMaxSize,
 		Format: FormatOptions{
 			IndentUnit:          "space",
 			IndentWidth:         4,
@@ -150,6 +157,13 @@ func FromConfig(c *config.Config, configDir string, files []string) (Settings, e
 	s.PerFileIgnores = c.Lint.PerFileIgnores
 	s.Preview = c.Lint.Preview
 	s.Index = c.Index.Enabled
+	if c.Cache.MaxSize != "" {
+		v, ok := ParseSize(c.Cache.MaxSize)
+		if !ok {
+			return s, fmt.Errorf("invalid cache max-size %q", c.Cache.MaxSize)
+		}
+		s.CacheMaxSize = v
+	}
 	s.Rules = c.Rules
 	s.TemplaterConfig = c.TemplaterCfg
 
@@ -297,4 +311,45 @@ func (s Settings) RuleInt(ruleName, key string, def int) int {
 		}
 	}
 	return def
+}
+
+// ParseSize parses a human-readable size such as "500MB", "2GiB", "1024" or
+// "unlimited". It returns (0, true) for an explicit "unlimited"/"0", meaning no
+// cap. A negative or unparseable value is rejected.
+func ParseSize(s string) (int64, bool) {
+	t := strings.ToLower(strings.TrimSpace(s))
+	if t == "" {
+		return 0, true
+	}
+	switch t {
+	case "unlimited", "none", "off":
+		return 0, true
+	}
+	mult := int64(1)
+	for _, sfx := range []struct {
+		s string
+		m int64
+	}{
+		{"gib", 1 << 30}, {"gb", 1_000_000_000}, {"g", 1 << 30},
+		{"mib", 1 << 20}, {"mb", 1_000_000}, {"m", 1 << 20},
+		{"kib", 1 << 10}, {"kb", 1_000}, {"k", 1 << 10},
+		{"b", 1},
+	} {
+		if strings.HasSuffix(t, sfx.s) {
+			mult = sfx.m
+			t = strings.TrimSpace(strings.TrimSuffix(t, sfx.s))
+			break
+		}
+	}
+	if t == "" {
+		return 0, false
+	}
+	n, err := strconv.ParseInt(t, 10, 64)
+	if err != nil || n < 0 {
+		return 0, false
+	}
+	if n == 0 {
+		return 0, true
+	}
+	return n * mult, true
 }

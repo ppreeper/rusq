@@ -280,7 +280,10 @@ what is in your repository.
 
 Results are cached under `.rusq_cache/`, keyed by a BLAKE2b-256 hash of the file
 contents plus the settings, so changing anything invalidates exactly what it
-should. `--no-cache` disables it and `rusq clean` empties it.
+should. `--no-cache` disables it and `rusq clean` empties it. The cache evicts
+its least recently used entries once it exceeds `[cache] max-size` (default
+`512MB`; `unlimited` disables the cap), so a large monorepo never grows it
+without bound.
 
 ```console
 $ rusq check --watch .

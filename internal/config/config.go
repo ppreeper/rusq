@@ -31,6 +31,7 @@ type Config struct {
 	Format       FormatConfig              `toml:"format"`
 	Rules        map[string]map[string]any `toml:"rules"`
 	TemplaterCfg map[string]map[string]any `toml:"templaters"`
+	Cache        CacheConfig               `toml:"cache"`
 	Index        IndexConfig               `toml:"index"`
 }
 
@@ -67,6 +68,11 @@ type FormatConfig struct {
 // segment name such as "comma", "operator" or "keyword".
 type TypeConfig struct {
 	LinePosition string `toml:"line-position"`
+}
+
+// CacheConfig is the [cache] table.
+type CacheConfig struct {
+	MaxSize string `toml:"max-size"`
 }
 
 // IndexConfig is the [index] table.
@@ -260,6 +266,7 @@ func Merge(dst, src *Config) {
 	if src.Index.Enabled {
 		dst.Index.Enabled = true
 	}
+	setStr(&dst.Cache.MaxSize, src.Cache.MaxSize)
 }
 
 func setStr(dst *string, src string) {
