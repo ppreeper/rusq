@@ -17,8 +17,8 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
           cache: true
@@ -47,8 +47,8 @@ jobs:
     name: benchmarks (linux)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
           cache: true
@@ -57,7 +57,7 @@ jobs:
         run: |
           mkdir -p bench
           make bench BENCHTIME=200ms BENCH_COUNT=1 | tee bench/ci-linux.txt
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: timings-linux
           path: bench/ci-linux.txt
@@ -69,8 +69,8 @@ jobs:
     name: benchmarks (windows)
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
           cache: true
@@ -93,7 +93,7 @@ jobs:
           go test -run '^$' -bench 'BenchmarkStartup|BenchmarkCheckFiles|BenchmarkLex|BenchmarkParse|BenchmarkLintDefault|BenchmarkFormat' -benchmem -benchtime=200ms -count=1 ./internal/... |
             Tee-Object -FilePath bench/ci-windows.txt
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: timings-windows
           path: |
