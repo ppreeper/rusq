@@ -113,7 +113,7 @@ scripting:
 # .pre-commit-config.yaml
 repos:
   - repo: https://github.com/ppreeper/rusq
-    rev: v0.1.0
+    rev: v0.1.1
     hooks:
       - id: rusq-check    # lint; non-zero exit on findings
       - id: rusq-format   # rewrite with the formatter
@@ -146,7 +146,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: ppreeper/rusq@v0.1.0
+      - uses: ppreeper/rusq@v0.1.1
         with:
           args: check --output-format github .
 ```
@@ -365,8 +365,8 @@ infers them per file from `.rusq.toml` discovery. **[decision]**
 $ cd editors/vscode
 $ npm install
 $ npm run build          # bundles src/ into dist/extension.js
-$ npm run package        # rusq-sql-0.1.0.vsix
-$ code --install-extension rusq-sql-0.1.0.vsix
+$ npm run package        # rusq-sql-0.1.1.vsix
+$ code --install-extension rusq-sql-0.1.1.vsix
 ```
 
 Or open `editors/vscode` in VS Code and press <kbd>F5</kbd> to run it in an
