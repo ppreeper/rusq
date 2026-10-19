@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.2
+
+- Tracks the `rusq v0.1.2` release. `rusq server` now accepts the `--stdio`
+  and `--clientProcessId` flags that `vscode-languageclient` appends when it
+  launches the server over stdio, fixing `write EPIPE` on startup.
+
 ## 0.1.1
 
 - Tracks the `rusq v0.1.1` release. No client behaviour changes: the same LSP
