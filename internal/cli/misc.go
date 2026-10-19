@@ -76,7 +76,7 @@ func newCleanCmd() *cobra.Command {
 }
 
 func newServerCmd() *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "server",
 		Short: "Run the language server (LSP over stdio)",
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -91,9 +91,16 @@ func newServerCmd() *cobra.Command {
 			if wd, err := os.Getwd(); err == nil {
 				opts.RootDir = wd
 			}
-			return lsp.Serve(os.Stdin, os.Stdout, opts)
+			return lsp.Serve(cmd.InOrStdin(), cmd.OutOrStdout(), opts)
 		},
 	}
+	// LSP clients append transport flags when they launch an Executable server
+	// over stdio: vscode-languageclient v10 sends `--stdio` and
+	// `--clientProcessId=<pid>`. The server always speaks stdio, so accept and
+	// ignore them here; other subcommands still reject them as unknown flags.
+	cmd.Flags().Bool("stdio", false, "accepted for LSP-client compatibility (ignored)")
+	cmd.Flags().String("clientProcessId", "", "accepted for LSP-client compatibility (ignored)")
+	return cmd
 }
 
 func newCompletionCmd(root *cobra.Command) *cobra.Command {

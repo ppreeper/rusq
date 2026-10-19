@@ -113,7 +113,7 @@ scripting:
 # .pre-commit-config.yaml
 repos:
   - repo: https://github.com/ppreeper/rusq
-    rev: v0.1.1
+    rev: v0.1.2
     hooks:
       - id: rusq-check    # lint; non-zero exit on findings
       - id: rusq-format   # rewrite with the formatter
@@ -146,7 +146,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: ppreeper/rusq@v0.1.1
+      - uses: ppreeper/rusq@v0.1.2
         with:
           args: check --output-format github .
 ```
@@ -202,7 +202,12 @@ one file with `--config <path>` or disable discovery with `--isolated`.
 
 ```
 rusq server [--config <FILE>] [--isolated] [--dialect <D>] [--templater <T>]
+            [--stdio] [--clientProcessId <PID>]
 ```
+
+`--stdio` and `--clientProcessId` are accepted for LSP-client compatibility.
+Clients such as `vscode-languageclient` append them when launching an
+`Executable` over stdio; the server always speaks stdio, so both are ignored.
 
 `--dialect` and `--templater` set the fallback when a file's configuration does
 not. Diagnostics are published against the document version that produced them;
@@ -365,8 +370,8 @@ infers them per file from `.rusq.toml` discovery. **[decision]**
 $ cd editors/vscode
 $ npm install
 $ npm run build          # bundles src/ into dist/extension.js
-$ npm run package        # rusq-sql-0.1.1.vsix
-$ code --install-extension rusq-sql-0.1.1.vsix
+$ npm run package        # rusq-sql-0.1.2.vsix
+$ code --install-extension rusq-sql-0.1.2.vsix
 ```
 
 Or open `editors/vscode` in VS Code and press <kbd>F5</kbd> to run it in an

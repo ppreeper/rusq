@@ -336,7 +336,7 @@ Pre-commit hooks are provided:
 ```yaml
 repos:
   - repo: https://github.com/ppreeper/rusq
-    rev: v0.1.1
+    rev: v0.1.2
     hooks:
       - id: rusq-check
       - id: rusq-format

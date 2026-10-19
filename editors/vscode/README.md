@@ -34,8 +34,8 @@ The `rusq` binary must be available. Either:
 go install github.com/ppreeper/rusq/cmd/rusq@latest
 ```
 
-The client tracks `rusq v0.1.1`; pin a specific release with
-`go install github.com/ppreeper/rusq/cmd/rusq@v0.1.1`.
+The client tracks `rusq v0.1.2`; pin a specific release with
+`go install github.com/ppreeper/rusq/cmd/rusq@v0.1.2`.
 
 or build it from a checkout (`go build -o rusq ./cmd/rusq`) and point
 `rusq.binaryPath` at it.
@@ -57,8 +57,8 @@ cd editors/vscode
 npm install
 npm run build        # bundles src/ into dist/extension.js
 npm run compile      # type-check only
-npm run package      # produces rusq-sql-0.1.1.vsix
-code --install-extension rusq-sql-0.1.1.vsix
+npm run package      # produces rusq-sql-0.1.2.vsix
+code --install-extension rusq-sql-0.1.2.vsix
 ```
 
 To hack on the extension, open this folder in VS Code and press <kbd>F5</kbd>
