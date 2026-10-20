@@ -2,7 +2,8 @@
 #
 # Package rusq-sql once per platform, bundling the matching rusq binary so the
 # extension works with no separate install. With VSCE_PAT and/or OVSX_PAT set
-# it also publishes each VSIX to the VS Code Marketplace and Open VSX.
+# it also publishes every platform package to the VS Code Marketplace and Open
+# VSX.
 #
 # Usage:
 #   bash scripts/publish.sh                        # package, then publish both registries if tokens are set
@@ -149,7 +150,7 @@ if [ "$want_marketplace" = 0 ] && [ "$want_ovsx" = 0 ]; then
 No publishing token is set for the requested registry ($REGISTRY), so nothing was published.
 
 Publish by hand with:
-  npx vsce publish --packagePath rusq-sql-$VERSION@<target>.vsix -p <marketplace-token>
+  npx vsce publish --packagePath rusq-sql-$VERSION@*.vsix rusq-sql-$VERSION.vsix --skip-duplicate -p <marketplace-token>
   npx ovsx publish rusq-sql-$VERSION@<target>.vsix -p <open-vsx-token>
 EOF
 	exit 0
@@ -157,14 +158,14 @@ fi
 
 # A rejected duplicate is a success for us: the version is already live.
 publish_one() {
-	local tool="$1" vsix="$2" out
+	local tool="$1" label="$2" out
 	shift 2
 	out="$("$@" 2>&1)" && {
 		printf '%s\n' "$out"
 		return 0
 	}
 	if printf '%s' "$out" | grep -qiE 'already (exists|published)|is already|has already been published'; then
-		echo "==> $tool publish $(basename "$vsix"): already published, skipping"
+		echo "==> $tool publish $label: already published, skipping"
 		return 0
 	fi
 	printf '%s\n' "$out" >&2
@@ -187,16 +188,24 @@ if [ "$want_ovsx" = 1 ]; then
 	fi
 fi
 
-for vsix in "${VSIXES[@]}"; do
-	name="$(basename "$vsix")"
-	if [ "$want_marketplace" = 1 ]; then
-		echo "==> vsce publish $name"
-		publish_one vsce "$vsix" \
-			npx --no-install vsce publish --packagePath "$vsix" -p "$VSCE_PAT"
-	fi
-	if [ "$want_ovsx" = 1 ]; then
-		echo "==> ovsx publish $name"
-		publish_one ovsx "$vsix" \
+# The Marketplace must receive *every* platform package (plus the universal
+# fallback) for a version, otherwise VS Code on a platform with no published
+# package reports the extension as "not available" for that architecture.
+# Microsoft's vscode-platform-specific-sample publishes them all in a single
+# vsce invocation; publishing one VSIX per invocation can leave targets missing
+# from the listing. --skip-duplicate keeps re-runs after a partial publish
+# working (an already-present target is skipped instead of failing the batch).
+if [ "$want_marketplace" = 1 ]; then
+	echo "==> vsce publish ${#VSIXES[@]} package(s)"
+	publish_one vsce "all ${#VSIXES[@]} packages" \
+		npx --no-install vsce publish --packagePath "${VSIXES[@]}" --skip-duplicate -p "$VSCE_PAT"
+fi
+
+# Open VSX takes one VSIX per invocation.
+if [ "$want_ovsx" = 1 ]; then
+	for vsix in "${VSIXES[@]}"; do
+		echo "==> ovsx publish $(basename "$vsix")"
+		publish_one ovsx "$(basename "$vsix")" \
 			npx --yes ovsx publish "$vsix" -p "$OVSX_PAT"
-	fi
-done
+	done
+fi

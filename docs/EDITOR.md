@@ -400,9 +400,13 @@ Extension Development Host.
 [`editors/vscode/scripts/publish.sh`](../editors/vscode/scripts/publish.sh)
 builds the six platform binaries, packages one VSIX per target plus a generic
 fallback, and — when a token is present — publishes to the VS Code Marketplace
-(`vsce`) and Open VSX (`ovsx`). Republishing is safe: both registries reject an
-already-published version instead of replacing it, and the script treats that
-as success, so a partial publish can simply be re-run.
+(`vsce`) and Open VSX (`ovsx`). Every platform package (plus the generic
+fallback) is uploaded to the Marketplace in a single `vsce publish` call: a
+version must contain a package for each platform a user runs, otherwise VS Code
+reports the extension as unavailable for that architecture (for example Apple
+Silicon). Republishing is safe: both registries reject an already-published
+version instead of replacing it, and the script treats that as success, so a
+partial publish can simply be re-run.
 
 ```console
 $ cd editors/vscode
